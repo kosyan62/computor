@@ -1,41 +1,22 @@
 import pytest
-from polynominal import PolynomialTerm, PolynomParser, Polynomial
+from polynominal import PolynomialTerm, PolynomParser, Polynomial, PolynomialFactory
+from test_data import (
+    data_polynom_term_positive_tuple,
+    data_polynom_parser_positive_string,
+    data_polynom_parser_negative_string,
+    data_polynom_second_degree_positive_tuple,
+    ids_polynom_second_degree_positive,
+    data_polynom_second_degree_reduce_positive_string,
+    data_polynom_first_degree_positive_tuple,
+    data_polynom_first_degree_negative_tuple,
+)
 
 
-data_polynom_term_positive_string = [
-    {"input": "-0", "expected": PolynomialTerm(0, 0)},
-    {"input": "+0", "expected": PolynomialTerm(0, 0)},
-    {"input": "0", "expected": PolynomialTerm(0, 0)},
-    {"input": "X", "expected": PolynomialTerm(1, 1)},
-    {"input": "+X", "expected": PolynomialTerm(1, 1)},
-    {"input": "-X", "expected": PolynomialTerm(-1, 1)},
-    {"input": "+4", "expected": PolynomialTerm(4, 0)},
-    {"input": "4", "expected": PolynomialTerm(4, 0)},
-    {"input": "-5", "expected": PolynomialTerm(-5, 0)},
-    {"input": "X^2", "expected": PolynomialTerm(1, 2)},
-    {"input": "-X^2", "expected": PolynomialTerm(-1, 2)},
-    {"input": "2*X", "expected": PolynomialTerm(2, 1)},
-    {"input": "+2*X", "expected": PolynomialTerm(2, 1)},
-    {"input": "-2*X", "expected": PolynomialTerm(-2, 1)},
-    {"input": "3*X^2", "expected": PolynomialTerm(3, 2)},
-    {"input": "+3*X^2", "expected": PolynomialTerm(3, 2)},
-    {"input": "-3*X^2", "expected": PolynomialTerm(-3, 2)},
-    {"input": "X^3", "expected": PolynomialTerm(1, 3)},
-    {"input": "+X^3", "expected": PolynomialTerm(1, 3)},
-    {"input": "-X^3", "expected": PolynomialTerm(-1, 3)},
-    {"input": "5*X^4", "expected": PolynomialTerm(5, 4)},
-    {"input": "+5*X^4", "expected": PolynomialTerm(5, 4)},
-    {"input": "-5*X^4", "expected": PolynomialTerm(-5, 4)},
-]
-
-
-@pytest.mark.parametrize("term_data", data_polynom_term_positive_string)
-def test_polynomial_term_from_string_positive(term_data):
-    term_str = term_data["input"]
-    expected_term = term_data["expected"]
+@pytest.mark.parametrize("term_str,expected", data_polynom_term_positive_tuple)
+def test_polynomial_term_from_string_positive(term_str, expected):
     term = PolynomialTerm.from_string(term_str)
-    assert term.coefficient == expected_term.coefficient
-    assert term.degree == expected_term.degree
+    assert term.coefficient == expected.coefficient
+    assert term.degree == expected.degree
 
 
 def test_polynomial_term_eq():
@@ -67,48 +48,12 @@ def test_polynomial_term_str():
     assert str(term) == "-1*X^0"
 
 
-data_polynom_parser_positive_string = [
-    {"input": "0=0", "expected": [PolynomialTerm(0, 0), PolynomialTerm(0, 0)]},
-    {"input": "X=0", "expected": [PolynomialTerm(1, 1), PolynomialTerm(0, 0)]},
-    {"input": "X^2=0", "expected": [PolynomialTerm(1, 2), PolynomialTerm(0, 0)]},
-    {"input": "X^2+X=0", "expected": [PolynomialTerm(1, 2), PolynomialTerm(1, 1), PolynomialTerm(0, 0)]},
-    {"input": "X^2+X^3=0", "expected": [PolynomialTerm(1, 2), PolynomialTerm(1, 3), PolynomialTerm(0, 0)]},
-    {"input": "X^2+X^3+X=-1", "expected": [PolynomialTerm(1, 2), PolynomialTerm(1, 3), PolynomialTerm(1, 1), PolynomialTerm(1, 0)]},
-    {"input": "2*X^2+3*X^3+4*X^4-1=0", "expected": [PolynomialTerm(2, 2), PolynomialTerm(3, 3), PolynomialTerm(4, 4), PolynomialTerm(-1, 0), PolynomialTerm(0, 0)]},
-    # String with spaces. Normalization test
-    {"input": "  2 *X ^ 2+ 3* X ^3+ 4 * x ^ 4 -1 = 0  ", "expected": [PolynomialTerm(2, 2), PolynomialTerm(3, 3), PolynomialTerm(4, 4), PolynomialTerm(-1, 0), PolynomialTerm(0, 0)]},
-    ]
-
-
 @pytest.mark.parametrize("polynom_data", data_polynom_parser_positive_string)
 def test_polynomial_parser_positive(polynom_data):
     polynom_str = polynom_data["input"]
     expected_polynom = polynom_data["expected"]
     polynom = PolynomParser.parse(polynom_str)
     assert polynom == expected_polynom
-
-
-data_polynom_parser_negative_string = [
-    {"input": "abc", "expected": "Invalid polynomial string"},
-    {"input": "X=abc", "expected": "Invalid polynomial string"},
-    {"input": "X=0=0", "expected": "Invalid polynomial string"},
-    {"input": "2X2X=3X", "expected": "Invalid term"},
-    {"input": "=3*X", "expected": "Invalid polynomial string"},
-    {"input": "X=^2", "expected": "Invalid term"},
-    {"input": "X++2=0", "expected": "Invalid polynomial string"},
-    {"input": "X--2=0", "expected": "Invalid polynomial string"},
-    {"input": "X+=0", "expected": "Invalid polynomial string"},
-    {"input": "X-=0", "expected": "Invalid polynomial string"},
-    {"input": "2*X*3=0", "expected": "Invalid term"},
-    {"input": "X*X=0", "expected": "Invalid term"},
-    {"input": "=X=0", "expected": "Invalid polynomial string"},
-    {"input": "X==0", "expected": "Invalid polynomial string"},
-    {"input": "=X=2", "expected": "Invalid polynomial string"},
-    {"input": "X=", "expected": "Invalid polynomial string"},
-    {"input": "=X", "expected": "Invalid polynomial string"},
-    {"input": "X+*2=0", "expected": "Invalid term"},
-    {"input": "X*+2=0", "expected": "Invalid term"},
-    {"input": "*X*2=0", "expected": "Invalid term"}]
 
 
 @pytest.mark.parametrize("polynom_data", data_polynom_parser_negative_string)
@@ -121,8 +66,83 @@ def test_polynomial_parser_negative(polynom_data):
 
 
 def test_polynomial(monkeypatch):
-    terms = [PolynomialTerm(1, 2), PolynomialTerm(1, 3), PolynomialTerm(1, 4)]
+    terms = [
+        PolynomialTerm(4, 4),
+        PolynomialTerm(2, 3),
+        PolynomialTerm(1, 2),
+    ]
+    terms_result = [
+        PolynomialTerm(0, 0),
+        PolynomialTerm(0, 1),
+        PolynomialTerm(1, 2),
+        PolynomialTerm(2, 3),
+        PolynomialTerm(4, 4),
+    ]
     monkeypatch.setattr(Polynomial, "__abstractmethods__", set())
-    polynom = Polynomial(terms)
-    assert polynom.terms == terms
+    polynom = Polynomial(terms)  # noqa
+    assert polynom.terms == terms_result
     assert polynom.degree == 4
+
+
+@pytest.mark.parametrize(
+    "equation,discriminant,roots",
+    data_polynom_second_degree_positive_tuple,
+    ids=ids_polynom_second_degree_positive,
+)
+def test_polynomial_2nd_functional(equation, discriminant, roots):
+    polynomial = PolynomialFactory(PolynomParser).create(equation)
+    assert polynomial.degree == 2, "Wrong degree"
+    assert polynomial.discriminant == discriminant, "Wrong discriminant"
+    assert polynomial.solutions_count == len(roots), "Wrong solutions count"
+
+    solutions = set(polynomial.get_solutions())
+    assert roots == solutions, "Wrong solutions"
+
+
+def test_polynomial_2nd_one_root():
+    roots = {0.0}
+    polynominal = PolynomialFactory(PolynomParser).create("1x^2 + 0x + 0 = 0")
+    assert polynominal.degree == 2, "Wrong degree"
+    assert polynominal.discriminant == 0, "Wrong discriminant"
+    assert polynominal.solutions_count == 1, "Wrong solutions count"
+    solutions = set(polynominal.get_solutions())
+    assert roots == solutions, "Wrong solutions"
+
+
+def test_polynomial_2nd_complex():
+    roots = {-0.5 + 0.5j, -0.5 - 0.5j}
+    polynominal = PolynomialFactory(PolynomParser).create("6x^2 + 6x + 3 = 0")
+    assert polynominal.degree == 2, "Wrong degree"
+    assert polynominal.discriminant == -36, "Wrong discriminant"
+    assert polynominal.solutions_count == 2, "Wrong solutions count"
+    solutions = set(polynominal.get_solutions())
+    assert roots == solutions, "Wrong solutions"
+
+
+@pytest.mark.parametrize(
+    "polynom_data", data_polynom_second_degree_reduce_positive_string
+)
+def test_polynomial_2nd_reduce(polynom_data):
+    polynom_str = polynom_data["input"]
+    expected_polynom = polynom_data["expected"]
+    polynom = PolynomialFactory(PolynomParser).create(polynom_str)
+    assert polynom.get_reduced_form() == expected_polynom, "Wrong reduce"
+
+
+@pytest.mark.parametrize("equation,root", data_polynom_first_degree_positive_tuple)
+def test_polynomial_1st_degree(equation, root):
+    polynominal = PolynomialFactory(PolynomParser).create(equation)
+    assert polynominal.degree == 1, "Wrong degree"
+    # assert polynominal.solutions_count == 1, "Wrong solutions count"
+    solutions = set(polynominal.get_solutions())
+    assert solutions == {root}, "Wrong solutions"
+
+
+@pytest.mark.parametrize(
+    "equation,solutions_count", data_polynom_first_degree_negative_tuple
+)
+def test_polynomial_1st_degree_negative(equation, solutions_count):
+    polynominal = PolynomialFactory(PolynomParser).create(equation)
+    assert polynominal.degree == 1, "Wrong degree"
+    assert polynominal.solutions_count == solutions_count, "Wrong solutions count"
+    assert polynominal.get_solutions() == (), "Wrong solutions"
