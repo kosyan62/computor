@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from polynominal import PolynomialTerm, PolynomParser, Polynomial, PolynomialFactory
 from test_data import (
@@ -9,6 +11,7 @@ from test_data import (
     data_polynom_second_degree_reduce_positive_string,
     data_polynom_first_degree_positive_tuple,
     data_polynom_first_degree_negative_tuple,
+    data_polynom_second_degree_all_positive_tuple,
 )
 
 
@@ -146,3 +149,22 @@ def test_polynomial_1st_degree_negative(equation, solutions_count):
     assert polynominal.degree == 1, "Wrong degree"
     assert polynominal.solutions_count == solutions_count, "Wrong solutions count"
     assert polynominal.get_solutions() == (), "Wrong solutions"
+
+
+@pytest.mark.parametrize(
+    "equation,discriminant,roots", data_polynom_second_degree_all_positive_tuple
+)
+def test_polynomial_2nd_functional_all_positive(equation, discriminant, roots):
+    polynomial = PolynomialFactory(PolynomParser).create(equation)
+    assert polynomial.degree == 2, "Wrong degree"
+    assert polynomial.discriminant == discriminant, "Wrong discriminant"
+    solutions = polynomial.get_solution_string().replace(" ", "").replace("x=", "")
+    roots = roots.replace(" ", "").replace("x=", "")
+    assert polynomial.solutions_count == len(roots.split(",")), "Wrong solutions count"
+
+    roots_arr = re.split("[-,+]", roots)
+    solutions_arr = re.split("[-,+]", solutions)
+    assert set(solutions_arr) == set(roots_arr), "Wrong solutions"
+    assert roots.count(",") == solutions.count(","), "Wrong solutions count"
+    assert roots.count("+") == solutions.count("+"), "Wrong sign in solutions"
+    assert roots.count("-") == solutions.count("-"), "Wrong sign in solutions"

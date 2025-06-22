@@ -2,6 +2,7 @@ import re
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 
+from utils import sqrt_str, divide_str
 
 class PolynomialTerm:
     def __init__(self, coefficient, degree):
@@ -145,6 +146,11 @@ class Polynomial(ABC):
         """Returns the solutions for the polynomial."""
         raise NotImplementedError
 
+    @abstractmethod
+    def get_solution_string(self) -> str:
+        """Returns a string representation of the solutions."""
+        raise NotImplementedError
+
     @property
     def degree(self) -> int:
         """Returns the degree of the polynomial."""
@@ -205,7 +211,6 @@ class Polynomial(ABC):
             reduced_form = reduced_form[1:]
 
         reduced_form = reduced_form.replace("*", " * ")
-        # reduced_form = reduced_form.replace("^", " ^ ")
         reduced_form = reduced_form.replace("=", " = ")
         reduced_form = reduced_form.replace("-", " - ")
         reduced_form = reduced_form.replace("+", " + ")
@@ -257,6 +262,14 @@ class PolynomialFirstDegree(Polynomial):
             return tuple()
         return (-1 * self.b / self.a,)
 
+    def get_solution_string(self) -> str:
+        if self.solutions_count != 1:
+            return "No solutions"
+        elif self.solutions_count == float("inf"):
+            return "Any x is solution"
+        else:
+            return "x = " + divide_str(self.b, self.a)
+
     @property
     def solutions_count(self) -> int:
         if self.a == 0:
@@ -307,6 +320,25 @@ class PolynomialSecondDegree(Polynomial):
             return x1, x2
         else:
             return (-self.b / (2 * self.a),)
+
+    def get_solution_string(self) -> str:
+        if self.discriminant == 0:
+            return "x = " + divide_str(-self.b, 2 * self.a)
+        else:
+            discriminant_sqrt = sqrt_str(self.discriminant)
+            try:
+                discriminant_sqrt = int(discriminant_sqrt)
+                x1 = divide_str(-self.b + discriminant_sqrt, 2 * self.a)
+                x2 = divide_str(-self.b - discriminant_sqrt, 2 * self.a)
+            except ValueError:
+                left, right = divide_str(-self.b, 2 * self.a), divide_str(discriminant_sqrt, 2 * self.a)
+                if left == "0":
+                    x1 = right
+                    x2 = "-" + right
+                else:
+                    x1 = left + " + " + right
+                    x2 = left + " - " + right
+            return f"x = {x1}, x = {x2}"
 
 
 class PolynomParser:

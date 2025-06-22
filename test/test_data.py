@@ -35,6 +35,20 @@ for index, row in df.iterrows():
         f"Equasion {row['Equation']} with roots {row['Roots']} "
     )
 
+df = pd.read_csv("quadratic_equations_dataset_with_solutions.csv", header=0)
+# take first ten lines
+# df = df.head(20)
+
+data_polynom_second_degree_all_positive_tuple = []
+for index, row in df.iterrows():
+    data_polynom_second_degree_all_positive_tuple.append(
+        (row["Equation"], row["Discriminant"], row["Roots"])
+    )
+# data_polynom_second_degree_all_positive_tuple = [
+#     ("5x^2 + 0x + 4 = 0", -80, "x = -2*sqrt(5)*I/5, x = 2*sqrt(5)*I/5",)
+#
+# ]
+
 data_polynom_term_positive_tuple = [
     # Zero cases
     ("0", PolynomialTerm(0, 0)),
