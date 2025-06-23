@@ -10,8 +10,36 @@ class PolynomialTerm:
         self.coefficient = coefficient
         self.degree = degree
 
-    def copy(self):
-        return PolynomialTerm(self.coefficient, self.degree)
+    def __mul__(self, other):
+        if isinstance(other, PolynomialTerm):
+            return PolynomialTerm(self.coefficient * other.coefficient, self.degree + other.degree)
+        elif isinstance(other, int):
+            return PolynomialTerm(self.coefficient * other, self.degree)
+        else:
+            raise ValueError(f"Invalid operand type {type(other)}")
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        if isinstance(other, PolynomialTerm):
+            return PolynomialTerm(self.coefficient // other.coefficient, self.degree - other.degree)
+        elif isinstance(other, int):
+            return PolynomialTerm(self.coefficient // other, self.degree)
+        else:
+            raise ValueError(f"Invalid operand type {type(other)}")
+
+    def __add__(self, other):
+        if isinstance(other, PolynomialTerm):
+            if self.degree != other.degree:
+                raise ValueError("Terms must have the same degree to add them.")
+            return PolynomialTerm(self.coefficient + other.coefficient, self.degree)
+        elif isinstance(other, int):
+            if self.degree != 0:
+                raise ValueError("Terms must have the same degree to add them.")
+            return PolynomialTerm(self.coefficient + other, self.degree)
+        else:
+            raise ValueError(f"Invalid operand type {type(other)}")
 
     @classmethod
     def from_string(cls, term_str: str) -> "PolynomialTerm":
@@ -222,9 +250,9 @@ class Polynomial(ABC):
                     "Value of terms must be a list of PolynomialTerm objects."
                 )
             if term.degree not in reduced_terms.keys():
-                reduced_terms[term.degree] = term.copy()
+                reduced_terms[term.degree] = term
             else:
-                reduced_terms[term.degree].coefficient += term.coefficient
+                reduced_terms[term.degree] += term
                 # We're reducing on the go here
                 if reduced_terms[term.degree].coefficient == 0:
                     del reduced_terms[term.degree]
@@ -393,7 +421,8 @@ class PolynomialSecondDegree(Polynomial):
 
 
 class PolynomParser:
-    pattern = r"^[\dX\^\-\+\*=]+$"  # Regex pattern to match a polynomial string
+    full_pattern = r"^[\dX\^\-\+\*=]+$"  # Regex pattern to match a polynomial string
+    term_pattern = r'(?=[+-])'
 
     @classmethod
     def normalize(cls, polynom_str: str):
@@ -406,7 +435,7 @@ class PolynomParser:
         polynom_str = polynom_str.replace(" ", "")
         polynom_str = polynom_str.replace("x", "X")
         polynom_str = polynom_str.replace("²", "^2")
-        if re.match(cls.pattern, polynom_str) is None:
+        if re.match(cls.full_pattern, polynom_str) is None:
             raise ValueError(
                 "Invalid polynomial string to parse: contains invalid characters."
             )
@@ -421,32 +450,29 @@ class PolynomParser:
         return polynom_str
 
     @classmethod
+    def split_terms(cls, polynomial_str: str) -> List[str]:
+        if not polynomial_str.startswith("+") and not polynomial_str.startswith("-"):
+            polynomial_str = "+" + polynomial_str
+        terms = re.split(pattern=cls.term_pattern, string=polynomial_str)
+        terms = terms[1:]  # the first match will always be empty
+        if "-" in terms or "+" in terms:
+            raise ValueError("Invalid polynomial string: contains invalid operator sequence.")
+        return terms
+
+    @classmethod
     def parse(cls, polynomial_str: str):
         """Parse a polynomial string into a list of PolynomialTerm objects."""
         polynomial_str = cls.normalize(polynomial_str)
         # Now we need to transfer terms from after equal sign to before with sign change
         polynomial_left, polynomial_right = polynomial_str.split("=")
-
-        # Split the polynomial string into parts based on operators
-        pattern = r"(?=[+\-])"
-        left_terms = re.split(pattern, polynomial_left)
-        right_terms = re.split(pattern, polynomial_right)
-
+        left_terms = cls.split_terms(polynomial_left)
+        right_terms = cls.split_terms(polynomial_right)
         terms = []
         for term in left_terms:
-            if not term:
-                continue
-            if term == "+" or term == "-":
-                raise ValueError(
-                    "Invalid polynomial string: invalid operator sequence."
-                )
             terms.append(PolynomialTerm.from_string(term))
 
         for term in right_terms:
-            if not term:
-                continue
-            new_term = PolynomialTerm.from_string(term)
-            new_term.coefficient *= -1
+            new_term = PolynomialTerm.from_string(term) * -1
             terms.append(new_term)
 
         return terms

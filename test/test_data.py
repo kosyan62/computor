@@ -126,6 +126,9 @@ data_polynom_parser_positive_string = [
         "expected": [PolynomialTerm(1, 2), PolynomialTerm(1, 1), PolynomialTerm(0, 0)],
     },
     {
+        "input": "-X^2=0",
+        "expected": [PolynomialTerm(-1, 2), PolynomialTerm(0, 0)]},
+    {
         "input": "X^2+X^3=0",
         "expected": [PolynomialTerm(1, 2), PolynomialTerm(1, 3), PolynomialTerm(0, 0)],
     },
