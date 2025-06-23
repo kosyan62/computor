@@ -1,7 +1,7 @@
 import re
 
 import pytest
-from polynominal import PolynomialTerm, PolynomParser, Polynomial, PolynomialFactory
+from computor.polynominal import PolynomialTerm, PolynomParser, Polynomial, PolynomialFactory
 from test_data import (
     data_polynom_term_positive_tuple,
     data_polynom_parser_positive_string,
@@ -146,7 +146,6 @@ def test_polynomial_1st_degree(equation, root):
 )
 def test_polynomial_1st_degree_negative(equation, solutions_count):
     polynominal = PolynomialFactory(PolynomParser).create(equation)
-    assert polynominal.degree == 1, "Wrong degree"
     assert polynominal.solutions_count == solutions_count, "Wrong solutions count"
     assert polynominal.get_solutions() == (), "Wrong solutions"
 

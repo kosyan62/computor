@@ -1,6 +1,6 @@
 import pandas as pd
 
-from polynominal import PolynomialTerm
+from computor.polynominal import PolynomialTerm
 
 
 def transform_roots(roots):
@@ -18,7 +18,8 @@ def transform_roots(roots):
 
 
 # Originally dataset from https://huggingface.co/datasets/Jack010/QuadraticDataset
-df = pd.read_csv("quadratic_equations_dataset_with_solutions.csv", header=0)
+csv_path = __file__.replace("test_data.py", "quadratic_equations_dataset_with_solutions.csv")
+df = pd.read_csv(csv_path, header=0)
 
 # find all with 'Real and distinct'
 df = df[df["Root Type"] == "Real and Distinct"]
@@ -35,7 +36,7 @@ for index, row in df.iterrows():
         f"Equasion {row['Equation']} with roots {row['Roots']} "
     )
 
-df = pd.read_csv("quadratic_equations_dataset_with_solutions.csv", header=0)
+df = pd.read_csv(csv_path, header=0)
 
 data_polynom_second_degree_all_positive_tuple = []
 for index, row in df.iterrows():

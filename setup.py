@@ -5,11 +5,12 @@ with open("README.md") as f:
 
 setup(
     name="computor",
-    version="0.1",
+    version="0.2",
     description=readme,
     author="mgena",
     author_email="mgena@student.42.fr",
     url="https://github.com/kosyan62/computor",
     license="MIT",
-    packages=find_packages(exclude=("tests",)),
+    packages=find_packages(),
+    entry_points={"console_scripts": ["ft_computor_v1=computor:main"]},
 )

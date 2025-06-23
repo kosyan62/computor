@@ -2,7 +2,7 @@ import re
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 
-from utils import sqrt_str, divide_str
+from computor.str_math import sqrt_str, divide_str
 
 
 class PolynomialTerm:

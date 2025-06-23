@@ -1,4 +1,4 @@
-from typing import List, Set, Iterable, Tuple
+from typing import Set, Iterable, Tuple
 
 SMALLEST_PRIME = 2
 
