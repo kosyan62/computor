@@ -168,3 +168,15 @@ def test_polynomial_2nd_functional_all_positive(equation, discriminant, roots):
     assert roots.count(",") == solutions.count(","), "Wrong solutions count"
     assert roots.count("+") == solutions.count("+"), "Wrong sign in solutions"
     assert roots.count("-") == solutions.count("-"), "Wrong sign in solutions"
+
+
+def test_polynomial_0_degree():
+    polynominal = PolynomialFactory(PolynomParser).create("1 = 1")
+    assert polynominal.degree == 0, "Wrong degree"
+    assert polynominal.solutions_count == float("inf"), "Wrong solutions count"
+    assert "Any X is solution" == polynominal.get_solution_string(), "Wrong solutions"
+
+    polynominal = PolynomialFactory(PolynomParser).create("1 = 0")
+    assert polynominal.degree == 0, "Wrong degree"
+    assert polynominal.solutions_count == -1, "Wrong solutions count"
+    assert "The sides of equation are not equal. Cannot solve." == polynominal.get_solution_string(), "Wrong solutions"

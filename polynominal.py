@@ -4,10 +4,14 @@ from typing import List, Tuple
 
 from utils import sqrt_str, divide_str
 
+
 class PolynomialTerm:
     def __init__(self, coefficient, degree):
         self.coefficient = coefficient
         self.degree = degree
+
+    def copy(self):
+        return PolynomialTerm(self.coefficient, self.degree)
 
     @classmethod
     def from_string(cls, term_str: str) -> "PolynomialTerm":
@@ -47,6 +51,9 @@ class PolynomialTerm:
         if not set(term_str).issubset(allowed_symbols):
             raise ValueError("Contains invalid characters")
 
+        if term_str == "" or term_str == "+" or term_str == "-":
+            raise ValueError("Term cannot be empty or only contain + or -")
+
         if term_str == "X" or term_str == "+X":
             return "1*X^1"
         elif term_str == "-X":
@@ -58,6 +65,8 @@ class PolynomialTerm:
             raise ValueError("Contains multiple X")
         if term_str.count("*") > 1:
             raise ValueError("Contains multiple *")
+        if term_str.startswith("*") or term_str.endswith("*"):
+            raise ValueError("Contains invalid start or end *")
         if term_str.count("^") > 1:
             raise ValueError("Contains multiple ^")
         x_pos = term_str.index("X")
@@ -133,7 +142,6 @@ class Polynomial(ABC):
 
         # setting
         self.terms = terms
-        self.degree  # noqa
 
     @property
     @abstractmethod
@@ -154,7 +162,7 @@ class Polynomial(ABC):
     @property
     def degree(self) -> int:
         """Returns the degree of the polynomial."""
-        if not self._degree:
+        if self._degree is None:
             self._degree = self.find_max_degree(self.terms)
         return self._degree
 
@@ -163,44 +171,17 @@ class Polynomial(ABC):
         return self._terms
 
     @terms.setter
-    def terms(self, value: List[PolynomialTerm]) -> None:
-        """
-        Sets the terms of the polynomial while reducing terms to the same degree by
-        combining their coefficients.
-
-        This setter method processes the list of polynomial terms and consolidates duplicate
-        terms by degree, ensuring that each degree has a single term with a summed coefficient.
-
-        :param value: A list of polynomial terms to be set in the polynomial. Each term
-            is an instance of the PolynomialTerm class and contains a degree and
-            coefficient.
-        :type value: List[PolynomialTerm]
-        :return: None
-        """
-        if self.terms:
+    def terms(self, terms: List[PolynomialTerm]):
+        if self._terms is not None:
             raise ValueError("Terms cannot be set after initialization.")
-        if not isinstance(value, list):
-            raise ValueError("Value of terms must be a list of PolynomialTerm objects.")
-        reduced_terms = {}
-        for term in value:
-            if not isinstance(term, PolynomialTerm):
-                raise ValueError(
-                    "Value of terms must be a list of PolynomialTerm objects."
-                )
-            if term.degree not in reduced_terms.keys():
-                reduced_terms[term.degree] = term
-            else:
-                reduced_terms[term.degree].coefficient += term.coefficient
-
-        # if a term is missing, we need to add it with a 0 coefficient
-        for degree in range(max(reduced_terms.keys()) + 1):
-            if degree not in reduced_terms:
-                reduced_terms[degree] = PolynomialTerm(0, degree)
-        self._terms = sorted(reduced_terms.values(), key=lambda x: x.degree)
+        self._terms = self.reduce_terms(terms)
 
     def get_reduced_form(self) -> str:
         """Returns the reduced form of the polynomial."""
         reduced_form = ""
+
+        if not self.terms:
+            return "0 * X^0 = 0"
         for term in reversed(self.terms):
             term_str = str(term)
             if term.coefficient >= 0:
@@ -216,6 +197,46 @@ class Polynomial(ABC):
         reduced_form = reduced_form.replace("+", " + ")
 
         return reduced_form + " = 0"
+
+    @staticmethod
+    def reduce_terms(terms: List[PolynomialTerm]) -> List[PolynomialTerm]:
+        """
+        Sets the terms of the polynomial while reducing terms to the same degree by
+        combining their coefficients.
+
+        This setter method processes the list of polynomial terms and consolidates duplicate
+        terms by degree, ensuring that each degree has a single term with a summed coefficient.
+
+        :param terms: A list of polynomial terms to be set in the polynomial. Each term
+            is an instance of the PolynomialTerm class and contains a degree and
+            coefficient.
+        :type terms: List[PolynomialTerm]
+        :return: None
+        """
+        if not isinstance(terms, list):
+            raise ValueError("Value of terms must be a list of PolynomialTerm objects.")
+        reduced_terms = {}
+        for term in terms:
+            if not isinstance(term, PolynomialTerm):
+                raise ValueError(
+                    "Value of terms must be a list of PolynomialTerm objects."
+                )
+            if term.degree not in reduced_terms.keys():
+                reduced_terms[term.degree] = term.copy()
+            else:
+                reduced_terms[term.degree].coefficient += term.coefficient
+                # We're reducing on the go here
+                if reduced_terms[term.degree].coefficient == 0:
+                    del reduced_terms[term.degree]
+
+        if not reduced_terms:
+            return []
+        # if a term is missing, we're adding it with a 0 coefficient
+        for degree in range(max(reduced_terms.keys()) + 1):
+            if degree not in reduced_terms:
+                reduced_terms[degree] = PolynomialTerm(0, degree)
+
+        return sorted(reduced_terms.values(), key=lambda x: x.degree)
 
     @staticmethod
     def find_max_degree(terms: List[PolynomialTerm]) -> int:
@@ -235,15 +256,43 @@ class PolynomialFactory:
 
     def __init__(self, parser):
         self.parser = parser
-        self.polynomials = {1: PolynomialFirstDegree, 2: PolynomialSecondDegree}
+        self.polynomials = {
+            0: PolynomialZeroDegree,
+            1: PolynomialFirstDegree,
+            2: PolynomialSecondDegree,
+        }
 
     def create(self, polynom_str):
         """Create a polynomial object based on the polynomial string."""
         polynom_terms = self.parser.parse(polynom_str)
-        degree = Polynomial.find_max_degree(polynom_terms)
+        reduced_terms = Polynomial.reduce_terms(polynom_terms)
+        degree = Polynomial.find_max_degree(reduced_terms)
         if degree not in self.polynomials.keys():
             raise ValueError(f"Polynomial of degree {degree} is not supported.")
         return self.polynomials[degree](polynom_terms)
+
+
+class PolynomialZeroDegree(Polynomial):
+    """Represents a zero degree polynomial."""
+
+    def get_solutions(self) -> Tuple[float]:
+        return ()
+
+    def get_solution_string(self) -> str:
+        if self.solutions_count == -1:
+            return "The sides of equation are not equal. Cannot solve."
+        else:
+            return "Any X is solution"
+
+    @property
+    def solutions_count(self) -> int:
+        if self.terms:
+            return -1
+        else:
+            return float("inf")
+
+    def __init__(self, terms):
+        super().__init__(terms)
 
 
 class PolynomialFirstDegree(Polynomial):
@@ -263,7 +312,7 @@ class PolynomialFirstDegree(Polynomial):
         return (-1 * self.b / self.a,)
 
     def get_solution_string(self) -> str:
-        if self.solutions_count != 1:
+        if self.solutions_count == 0:
             return "No solutions"
         elif self.solutions_count == float("inf"):
             return "Any x is solution"
@@ -331,7 +380,9 @@ class PolynomialSecondDegree(Polynomial):
                 x1 = divide_str(-self.b + discriminant_sqrt, 2 * self.a)
                 x2 = divide_str(-self.b - discriminant_sqrt, 2 * self.a)
             except ValueError:
-                left, right = divide_str(-self.b, 2 * self.a), divide_str(discriminant_sqrt, 2 * self.a)
+                left, right = divide_str(-self.b, 2 * self.a), divide_str(
+                    discriminant_sqrt, 2 * self.a
+                )
                 if left == "0":
                     x1 = right
                     x2 = "-" + right
@@ -349,6 +400,16 @@ class PolynomParser:
         """Normalize and validate a polynomial string."""
         if not isinstance(polynom_str, str):
             raise ValueError("Invalid polynomial string to parse: not a string.")
+        polynom_str = polynom_str.strip()
+        polynom_str = polynom_str.replace("\n", "")
+        polynom_str = polynom_str.replace("\t", "")
+        polynom_str = polynom_str.replace(" ", "")
+        polynom_str = polynom_str.replace("x", "X")
+        polynom_str = polynom_str.replace("²", "^2")
+        if re.match(cls.pattern, polynom_str) is None:
+            raise ValueError(
+                "Invalid polynomial string to parse: contains invalid characters."
+            )
         if polynom_str.count("=") != 1:
             raise ValueError(
                 "Invalid polynomial string to parse: '=' should be present exactly once."
@@ -356,15 +417,6 @@ class PolynomParser:
         if polynom_str.startswith("=") or polynom_str.endswith("="):
             raise ValueError(
                 "Invalid polynomial string to parse: '=' should not be at the beginning or end."
-            )
-        polynom_str = polynom_str.strip()
-        polynom_str = polynom_str.replace("\n", "")
-        polynom_str = polynom_str.replace(" ", "")
-        polynom_str = polynom_str.replace("x", "X")
-        polynom_str = polynom_str.replace("²", "^2")
-        if re.match(cls.pattern, polynom_str) is None:
-            raise ValueError(
-                "Invalid polynomial string to parse: contains invalid characters."
             )
         return polynom_str
 

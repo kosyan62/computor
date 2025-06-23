@@ -36,18 +36,12 @@ for index, row in df.iterrows():
     )
 
 df = pd.read_csv("quadratic_equations_dataset_with_solutions.csv", header=0)
-# take first ten lines
-# df = df.head(20)
 
 data_polynom_second_degree_all_positive_tuple = []
 for index, row in df.iterrows():
     data_polynom_second_degree_all_positive_tuple.append(
         (row["Equation"], row["Discriminant"], row["Roots"])
     )
-# data_polynom_second_degree_all_positive_tuple = [
-#     ("5x^2 + 0x + 4 = 0", -80, "x = -2*sqrt(5)*I/5, x = 2*sqrt(5)*I/5",)
-#
-# ]
 
 data_polynom_term_positive_tuple = [
     # Zero cases
@@ -185,6 +179,16 @@ data_polynom_parser_negative_string = [
     {"input": "=X", "expected": "Invalid polynomial string"},
     {"input": "X+*2=0", "expected": "Invalid term"},
     {"input": "*X*2=0", "expected": "Invalid term"},
+    {"input": "2**X=0", "expected": "Invalid term"},
+    {"input": "X**2=0", "expected": "Invalid term"},
+    {"input": "2*X**2=0", "expected": "Invalid term"},
+    {"input": "X^*2=0", "expected": "Invalid term"},
+    {"input": "X^^2=0", "expected": "Invalid term"},
+    {"input": "X^2^2=0", "expected": "Invalid term"},
+    {"input": "=", "expected": "Invalid polynomial string"},
+    {"input": "==", "expected": "Invalid polynomial string"},
+    {"input": " = ", "expected": "Invalid polynomial string"},
+    {"input": "X = 1*2", "expected": "Invalid term"},
 ]
 
 data_polynom_second_degree_reduce_positive_string = [
