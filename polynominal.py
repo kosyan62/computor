@@ -345,7 +345,7 @@ class PolynomialFirstDegree(Polynomial):
         elif self.solutions_count == float("inf"):
             return "Any x is solution"
         else:
-            return "x = " + divide_str(self.b, self.a)
+            return "x = " + divide_str(-self.b, self.a)
 
     @property
     def solutions_count(self) -> int:
@@ -422,7 +422,7 @@ class PolynomialSecondDegree(Polynomial):
 
 class PolynomParser:
     full_pattern = r"^[\dX\^\-\+\*=]+$"  # Regex pattern to match a polynomial string
-    term_pattern = r'(?=[+-])'
+    term_pattern = r'(?=[+\-])'
 
     @classmethod
     def normalize(cls, polynom_str: str):
@@ -447,6 +447,10 @@ class PolynomParser:
             raise ValueError(
                 "Invalid polynomial string to parse: '=' should not be at the beginning or end."
             )
+        if re.search(r"\^\D", polynom_str):
+            raise ValueError(
+                "Invalid polynomial string to parse: contains invalid power notation."
+            )
         return polynom_str
 
     @classmethod
@@ -467,6 +471,7 @@ class PolynomParser:
         polynomial_left, polynomial_right = polynomial_str.split("=")
         left_terms = cls.split_terms(polynomial_left)
         right_terms = cls.split_terms(polynomial_right)
+
         terms = []
         for term in left_terms:
             terms.append(PolynomialTerm.from_string(term))

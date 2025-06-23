@@ -185,13 +185,76 @@ data_polynom_parser_negative_string = [
     {"input": "2**X=0", "expected": "Invalid term"},
     {"input": "X**2=0", "expected": "Invalid term"},
     {"input": "2*X**2=0", "expected": "Invalid term"},
-    {"input": "X^*2=0", "expected": "Invalid term"},
-    {"input": "X^^2=0", "expected": "Invalid term"},
     {"input": "X^2^2=0", "expected": "Invalid term"},
     {"input": "=", "expected": "Invalid polynomial string"},
     {"input": "==", "expected": "Invalid polynomial string"},
     {"input": " = ", "expected": "Invalid polynomial string"},
     {"input": "X = 1*2", "expected": "Invalid term"},
+
+    # No '=' at all
+    {"input": "X^2+3*X", "expected": "Invalid polynomial string"},
+    {"input": "3*X^2+X^1-1", "expected": "Invalid polynomial string"},
+
+    # Multiple '=' signs
+    {"input": "X=3=X", "expected": "Invalid polynomial string"},
+    {"input": "0=X=0", "expected": "Invalid polynomial string"},
+
+    # Empty sides
+    {"input": "= ", "expected": "Invalid polynomial string"},
+    {"input": " =0", "expected": "Invalid polynomial string"},
+    {"input": "X^2 + 3*X= ", "expected": "Invalid polynomial string"},
+
+    # Garbled syntax
+    {"input": "X^2++3*X=0", "expected": "Invalid polynomial string"},
+    {"input": "X^2--3*X=0", "expected": "Invalid polynomial string"},
+    {"input": "X^2+-3*X=0", "expected": "Invalid polynomial string"},
+    {"input": "+-3*X^2=0", "expected": "Invalid polynomial string"},
+    {"input": "--3*X^2=0", "expected": "Invalid polynomial string"},
+    {"input": "**3*X^2=0", "expected": "Invalid term"},
+
+    # Misplaced operators
+    {"input": "X^+2=0", "expected": "Invalid polynomial string"},
+    {"input": "X^-=0", "expected": "Invalid polynomial string"},
+    {"input": "X^--2=0", "expected": "Invalid polynomial string"},
+    {"input": "X^=2", "expected": "Invalid polynomial string"},
+    {"input": "3^X=0", "expected": "Invalid polynomial string"},
+    {"input": "*X=0", "expected": "Invalid term"},
+    {"input": "X*=2", "expected": "Invalid term"},
+    {"input": "X^2*=0", "expected": "Invalid term"},
+    {"input": "X^2=*", "expected": "Invalid term"},
+    {"input": "X^*2=0", "expected": "Invalid polynomial string"},
+    {"input": "X^^2=0", "expected": "Invalid polynomial string"},
+    {"input": "3*X^^2=0", "expected": "Invalid polynomial string"},
+
+    # Symbols used incorrectly
+    {"input": "X/2=0", "expected": "Invalid polynomial string"},
+    {"input": "X@2=0", "expected": "Invalid polynomial string"},
+    {"input": "2&X=0", "expected": "Invalid polynomial string"},
+    {"input": "X#2=0", "expected": "Invalid polynomial string"},
+
+    # Mixed identifiers
+    {"input": "2*Y^2=0", "expected": "Invalid polynomial string"},
+    {"input": "x*y=0", "expected": "Invalid polynomial string"},
+    {"input": "3*X^a=0", "expected": "Invalid polynomial string"},
+    {"input": "X^2.5=0", "expected": "Invalid polynomial string"},
+
+    # Typos and misplaced expressions
+    {"input": "X^^=0", "expected": "Invalid polynomial string"},
+    {"input": "X^^^2=0", "expected": "Invalid polynomial string"},
+    {"input": "3*X^2+=0", "expected": "Invalid polynomial string"},
+    {"input": "3**X=0", "expected": "Invalid term"},
+    {"input": "X^2++", "expected": "Invalid polynomial string"},
+    {"input": "3*X^^=0", "expected": "Invalid polynomial string"},
+
+    # Leading or trailing operator
+    {"input": "+=X^2", "expected": "Invalid polynomial string"},
+    {"input": "-=X", "expected": "Invalid polynomial string"},
+    {"input": "+=+3*X^2", "expected": "Invalid polynomial string"},
+
+    # Ambiguous compound terms
+    {"input": "2X3X=0", "expected": "Invalid term"},
+    {"input": "X2X=0", "expected": "Invalid term"},
+
 ]
 
 data_polynom_second_degree_reduce_positive_string = [
@@ -211,9 +274,43 @@ data_polynom_first_degree_positive_tuple = [
     ("0 = X", 0),
     ("- X = 0", 0),
     ("x - x + x - X = X", 0),
+
+    # Additional test cases:
+    ("3*x = 12", 4),                        # simple division
+    ("3x - x = 4", 2),                      # reduction needed
+    ("x + 3 = 7", 4),                       # isolate x
+    ("7 = x + 3", 4),                       # inverse side
+    ("x - 4 = 2", 6),                       # add to both sides
+    ("-x = 4", -4),                         # negative x
+    ("-2x + 8 = 0", 4),                     # isolate and divide
+    ("5*x + 3 = 3", 0),                     # constant cancels
+    ("-x = -1", 1),                         # double negative
+    ("3*X + 9 = 3", -2),                    # negative result
+    ("X + X + X = 9", 3),                   # multiple same terms
+    ("0 = 2x - 10", 5),                     # RHS zero
+    ("0 = -3x + 9", 3),                     # negative coeff
+    ("10 = 2*x + 4", 3),                    # normal form
+    ("   x=2   ", 2),                       # whitespace
+    ("X - 0 = 0", 0),                       # trivial
+    ("0 = 0 + X", 0),                       # identity
+    ("x = 2", 2),  # already in solved form
+    ("x = -3", -3),  # negative RHS
+    ("x = 0", 0),  # zero RHS
+    ("x + 1 = 5", 4),  # move RHS
+    ("5 = x + 1", 4),  # flipped sides
+    ("-x = -3", 3),  # simple negation
+    ("x - 2 = 5", 7),  # isolate x
+    ("3 = x - 1", 4),  # inverse again
+    ("2x = x + 4", 4),  # requires reduction
+    ("x + x = 2", 1),  # combine like terms
 ]
 
 data_polynom_first_degree_negative_tuple = [
     ("0 * X = 0", float("inf")),
     ("0 * X = 1", 0),
+    ("2x = x + x", float("inf")),  # identity form
+    ("x = x", float("inf")),  # identity
+    ("x = x + 1", -1),  # contradiction
+    ("2x + 1 = 2x + 1", float("inf")),  # identity with terms
+    ("2x + 1 = 2x - 1", -1),  # contradiction
 ]
