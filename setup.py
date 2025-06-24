@@ -12,5 +12,5 @@ setup(
     url="https://github.com/kosyan62/computor",
     license="MIT",
     packages=find_packages(),
-    entry_points={"console_scripts": ["ft_computor_v1=computor:main"]},
+    entry_points={"console_scripts": ["computor=computor:main"]},
 )
