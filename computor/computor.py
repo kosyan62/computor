@@ -1,5 +1,5 @@
 import argparse
-from computor.polynominal import PolynomParser, PolynomialFactory
+from polynominal import PolynomParser, PolynomialFactory
 
 
 def init_argparse():
