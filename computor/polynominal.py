@@ -108,7 +108,6 @@ class PolynomialTerm:
                 term_str = term_str[:x_start] + "+1*" + term_str[x_start + 1 :]
             elif term_str[x_start].isdigit():
                 term_str = term_str[: x_start + 1] + "*" + term_str[x_start + 1 :]
-        print(f"X position: {x_pos}, term_str: {term_str}")
         if term_str.count("*") > 1:
             raise ValueError("Invalid number of * operators")
         if any(
