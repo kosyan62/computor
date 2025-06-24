@@ -164,6 +164,7 @@ data_polynom_parser_positive_string = [
     },
 ]
 data_polynom_parser_negative_string = [
+    {"input": "-10*10x", "expected": "Invalid polynomial string"},
     {"input": "abc", "expected": "Invalid polynomial string"},
     {"input": "X=abc", "expected": "Invalid polynomial string"},
     {"input": "X=0=0", "expected": "Invalid polynomial string"},

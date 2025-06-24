@@ -2,7 +2,7 @@ import re
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 
-from str_math import sqrt_str, divide_str
+from computor.str_math import sqrt_str, divide_str
 
 
 class PolynomialTerm:
@@ -100,7 +100,7 @@ class PolynomialTerm:
         x_pos = term_str.index("X")
         if not term_str.endswith("X") and term_str[x_pos + 1] not in ("*", "^"):
             raise ValueError("X must be followed by * or ^")
-        if not term_str.startswith("X") and not term_str.startswith("+X") and not term_str.startswith("-X"):
+        if not term_str.startswith("X"):
             x_start = x_pos - 1
             if term_str[x_start] == "-":
                 term_str = term_str[:x_start] + "-1*" + term_str[x_start + 1 :]
@@ -108,8 +108,9 @@ class PolynomialTerm:
                 term_str = term_str[:x_start] + "+1*" + term_str[x_start + 1 :]
             elif term_str[x_start].isdigit():
                 term_str = term_str[: x_start + 1] + "*" + term_str[x_start + 1 :]
-            elif term_str[x_start] != "*":
-                raise ValueError("X must be preceded by +, -, * or a digit")
+        print(f"X position: {x_pos}, term_str: {term_str}")
+        if term_str.count("*") > 1:
+            raise ValueError("Invalid number of * operators")
         if any(
             [b in term_str for b in ("--", "++", "+-", "-+", "-*", "+*", "*^", "^*")]
         ):
@@ -445,13 +446,13 @@ class PolynomParser:
             raise ValueError(
                 "Invalid polynomial string to parse: '=' should be present exactly once."
             )
-        if polynom_str.startswith("=") or polynom_str.endswith("="):
-            raise ValueError(
-                "Invalid polynomial string to parse: '=' should not be at the beginning or end."
-            )
         if re.search(r"\^\D", polynom_str) or re.search(r"\d\^", polynom_str):
             raise ValueError(
                 "Invalid polynomial string to parse: contains invalid power notation."
+            )
+        if re.search(r"[\^\-+*=]$", polynom_str) or re.search(r"^[*\^=]", polynom_str):
+            raise ValueError(
+                "Invalid polynomial string to parse: cannot start or end with an operator."
             )
         return polynom_str
 
