@@ -127,7 +127,7 @@ class PolynomialTerm:
             if "X" in term_str:
                 term_str = "1*" + term_str
             else:
-                term_str = term_str * "X^0"
+                term_str = term_str + "X^0"
         left, right = term_str.split("*")
         coefficient, degree = (left, right) if "X" in right else (right, left)
         if not coefficient:
